@@ -1,6 +1,6 @@
 package org.monitoring;
 
-public class Monitorer {
+public class CentralizedMonitorer {
     // var dashboard
 
     public void monitor() {
