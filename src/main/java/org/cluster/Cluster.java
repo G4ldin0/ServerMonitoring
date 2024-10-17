@@ -141,7 +141,7 @@ public class Cluster {
     }
 
     public static void main(String[] args) {
-        Cluster cluster = new Cluster(1);
+        Cluster cluster = new Cluster(2);
         cluster.getData();
     }
 

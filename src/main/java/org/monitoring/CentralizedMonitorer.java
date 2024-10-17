@@ -14,15 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 public class CentralizedMonitorer {
     // var dashboard
     private final List<Order> dashbord;
-    private final List<Order> infos;
+    private final List<Order>[] infos;
     private final src.RabbitSender rabbitSender;
     public CentralizedMonitorer() throws IOException, TimeoutException {
         dashbord = new ArrayList<>();
-        infos = new ArrayList<>();
+        infos = new List[]{new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()};
         this.rabbitSender = new src.RabbitSender();
         try {
             rabbitSender.connect();
@@ -69,32 +70,45 @@ public class CentralizedMonitorer {
         }).start();
     }
     public void loop() throws IOException, TimeoutException {
-        String FILA = "servidor1/serviço1";
+        String[] FILA = {
+                "servidor1/serviço1", "servidor1/serviço2",
+                "servidor2/serviço1", "servidor2/serviço2",
+                "servidor3/serviço1", "servidor3/serviço2"
+        };
         boolean autoAck = true;
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
 
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
-        channel.queueDeclare(FILA, false,
-                false, false,
-                null);
 
+        for (String e : FILA)
+            channel.queueDeclare(e, false,
+                    false, false,
+                    null);
 
-        DeliverCallback callback = (consumidor, entrega) -> {
-                String msg = new String(entrega.getBody(), StandardCharsets.UTF_8);
-                System.out.println("Recebi: " + msg);
-                infos.add(new Order(msg));
-                this.analyzer(msg);
-        };
+        Function<Integer, DeliverCallback> callback = (Integer id) ->
+                (consumidor, entrega) -> {
+                    String msg = new String(entrega.getBody(), StandardCharsets.UTF_8);
+                    System.out.println("Recebi: " + msg);
+                    infos[id].add(new Order(msg));
+                    this.analyzer(msg, id);
+            };
+
+        ;
 
         new Thread(
                 () -> {
                     while (true) {
                         try {
-                            channel.basicConsume(FILA, autoAck,
-                                    callback, consumidor -> {
-                            });
+                            for(int i = 0; i < 6; i++)
+                                channel.basicConsume(FILA[i], autoAck,
+                                        callback.apply(i + 1), consumidor -> {
+                                });
+
+//                            channel.basicConsume(FILA, autoAck, callback.apply(2), consumidor -> {});
+//                            channel.basicConsume(FILA, autoAck, callback.apply(3), consumidor -> {});
+
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -112,21 +126,21 @@ public class CentralizedMonitorer {
         }
     }
 
-    private void analyzer(String msg) {
+    private void analyzer(String msg, int id) {
         Order info = new Order(msg);
         //System.out.println(info.toString());
-        if(infos.size() >= 2) {
+        if(infos[id].size() >= 2) {
             switch ((String) info.getJson().get("status")) {
                 case "azul":
                     break;
                 case "amarelo":
-                    if(infos.get(infos.size() - 2).getJson().get("status").equals("azul")){
+                    if(infos[id].get(infos[id].size() - 2).getJson().get("status").equals("azul")){
                         createOrder(info.getJson());
                     }
                     break;
                 case "vermelho":
-                    if(infos.get(infos.size() - 2).getJson().get("status").equals("azul") ||
-                            infos.get(infos.size() - 2).getJson().get("status").equals("amarelo") ){
+                    if(infos[id].get(infos[id].size() - 2).getJson().get("status").equals("azul") ||
+                            infos[id].get(infos[id].size() - 2).getJson().get("status").equals("amarelo") ){
                         createOrder(info.getJson());
                     }
                     break;
