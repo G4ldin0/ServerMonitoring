@@ -1,5 +1,7 @@
 package org.cluster;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Random;
 
@@ -22,9 +24,18 @@ public class Service {
     {
         numberGenerator = new Random();
 
+        CPUPercentage = numberGenerator.nextFloat();
+        memoryPercentage = numberGenerator.nextFloat();
+        responseTime = numberGenerator.nextFloat();
+        activeConnections = numberGenerator.nextInt(10);
+
+        CPUPercentageGain += (numberGenerator.nextFloat() * 0.1f) - 0.5f;
+        memoryPercentageGain += (numberGenerator.nextFloat() * 0.1f) - 0.5f;
+        responseTimeGain += (numberGenerator.nextFloat() * 0.1f) - 0.5f;
+
     }
 
-    public String getData(){
+    public JSONObject getData(){
 
         // variação de recursos
         CPUPercentageGain += (numberGenerator.nextFloat() * 0.1f) - 0.5f;
@@ -35,20 +46,21 @@ public class Service {
         activeConnectionsGain += Math.abs(newConn) > 0.3 ? (int)(Math.abs(newConn)/newConn) : 0;
 
         // muda valores baseado na variação
-        CPUPercentage += numberGenerator.nextFloat() * CPUPercentageGain;
-        memoryPercentage += numberGenerator.nextFloat() * memoryPercentageGain;
-        responseTime += numberGenerator.nextFloat() * responseTimeGain;
-        activeConnections += activeConnectionsGain;
+        CPUPercentage += Math.max(numberGenerator.nextFloat() * CPUPercentageGain, 0.0f);
+        memoryPercentage += Math.max(numberGenerator.nextFloat() * memoryPercentageGain, 0.0f);
+        responseTime += Math.max(numberGenerator.nextFloat() * 3.66f * responseTimeGain, 0.0f);
+        activeConnections += Math.max(activeConnectionsGain, 0);
 
         // geração da string JSON para ser enviada
-        HashMap<String, Float> response = new HashMap<>();
+//        HashMap<String, Float> response = new HashMap<>();
+        JSONObject response = new JSONObject();
         response.put("cpu_usage", CPUPercentage);
         response.put("memory_usage", memoryPercentage);
         response.put("response_time", responseTime);
         response.put("active_connections", (float) activeConnections);
 
         // JSON.parse("{cpu: " + CPUPercentage + ", memory: " + memoryPercentage + "}");
-        return "";
+        return response;
     }
 
     public void fix(){
