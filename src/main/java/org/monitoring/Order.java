@@ -1,59 +1,34 @@
 package org.monitoring;
 
+import org.json.JSONObject;
+
 public class Order {
-    private String timeStamp;
-    private String server;
-    private String status;
-    private String problem;
-    private String actionRequired;
+    private JSONObject json;
     public Order(){}
 
-    public Order(String time, String ser, String stat, String probl, String act){
-        this.timeStamp = time;
-        this.server = ser;
-        this.status = stat;
-        this.problem = probl;
-        this.actionRequired = act;
+    public Order(String json){
+        this.json = new JSONObject(json);
+    }
+    public Order(String timestamp, String server, String service, String status, String problem, String action_required){
+        json = new JSONObject();
+        json.put("Timestamp", timestamp);
+        json.put("Server", server);
+        json.put("Service", service);
+        json.put("Status", status);
+        json.put("Problem", problem);
+        json.put("Action_Required",action_required);
     }
 
-
-    public String getActionRequired() {
-        return actionRequired;
+    public void setJson(JSONObject json){
+        this.json = json;
     }
 
-    public void setActionRequired(String actionRequired) {
-        this.actionRequired = actionRequired;
+    public JSONObject getJson() {
+        return json;
     }
 
-    public String getProblem() {
-        return problem;
+    public String toString(){
+        return json.toString();
     }
 
-    public void setProblem(String problem) {
-        this.problem = problem;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getServer() {
-        return server;
-    }
-
-    public void setServer(String server) {
-        this.server = server;
-    }
-
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
-    }
 }
