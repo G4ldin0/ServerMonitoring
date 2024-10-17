@@ -34,6 +34,7 @@ public class RabbitSender {
     }
 
     public  void sendMsg(String msg) throws IOException, InterruptedException {
+        System.out.println("Enviei: " + msg);
         channel.basicPublish("", FILA, null, msg.getBytes(StandardCharsets.UTF_8));
     }
 }

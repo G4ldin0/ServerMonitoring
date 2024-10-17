@@ -1,19 +1,28 @@
 package org.monitoring;
 
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 import org.json.JSONObject;
-import org.resources.RabbitConsomer;
+
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 public class CentralizedMonitorer {
     // var dashboard
     private final List<Order> dashbord;
+    private final List<Order> infos;
     private final src.RabbitSender rabbitSender;
     public CentralizedMonitorer() throws IOException, TimeoutException {
         dashbord = new ArrayList<>();
+        infos = new ArrayList<>();
         this.rabbitSender = new src.RabbitSender();
         try {
             rabbitSender.connect();
@@ -24,18 +33,8 @@ public class CentralizedMonitorer {
         }
 
 
-        this.debug();
+        //this.debug();
         this.loop();
-    }
-    public void monitor() {
-        // string json = broker.recieve().parse();
-
-        // se o status for amarelo ou vermelho e mais perigoso que antes:
-        // var ordemServico = parser.parse(json);
-        // queue.send(ordemServico);
-
-        //dashboard.update(json);
-
     }
 
     public void gerarOrdemServico(String json) {
@@ -70,10 +69,81 @@ public class CentralizedMonitorer {
         }).start();
     }
     public void loop() throws IOException, TimeoutException {
-        RabbitConsomer consomer = new RabbitConsomer();
-        consomer.connect("localhost", "servidor1/serviço1");
-        while (true){
+        String FILA = "servidor1/serviço1";
+        boolean autoAck = true;
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
 
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        channel.queueDeclare(FILA, false,
+                false, false,
+                null);
+
+
+        DeliverCallback callback = (consumidor, entrega) -> {
+                String msg = new String(entrega.getBody(), StandardCharsets.UTF_8);
+                System.out.println("Recebi: " + msg);
+                infos.add(new Order(msg));
+                this.analyzer(msg);
+        };
+
+        new Thread(
+                () -> {
+                    while (true) {
+                        try {
+                            channel.basicConsume(FILA, autoAck,
+                                    callback, consumidor -> {
+                            });
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }).start();
+
+        String a;
+        Scanner cin = new Scanner(System.in);
+        while(true){
+            a = cin.next();
+
+            if(a.equalsIgnoreCase("a")){
+                break;
+            }
         }
+    }
+
+    private void analyzer(String msg) {
+        Order info = new Order(msg);
+        //System.out.println(info.toString());
+        if(infos.size() >= 2) {
+            switch ((String) info.getJson().get("status")) {
+                case "azul":
+                    break;
+                case "amarelo":
+                    if(infos.get(infos.size() - 2).getJson().get("status").equals("azul")){
+                        createOrder(info.getJson());
+                    }
+                    break;
+                case "vermelho":
+                    if(infos.get(infos.size() - 2).getJson().get("status").equals("azul") ||
+                            infos.get(infos.size() - 2).getJson().get("status").equals("amarelo") ){
+                        createOrder(info.getJson());
+                    }
+                    break;
+            }
+        }
+    }
+
+    public void createOrder(JSONObject json){
+        dashbord.add(new Order(
+                LocalDateTime.now().toString(),
+                json.getString("server"),
+                json.getString("service"),
+                json.getString("status"),
+                "TA FODA MANO!!!!!",
+                "DE SEUS PULO!!!!"
+        ));
+
+        gerarOrdemServico(dashbord.get(dashbord.size() - 1).toString());
     }
 }

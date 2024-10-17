@@ -4,9 +4,9 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
-import sun.security.smartcardio.SunPCSC;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitConsomer {
@@ -24,7 +24,19 @@ public class RabbitConsomer {
         channel = connection.createChannel();
 
         this.queueDeclare(FILA);
+        this.createCallback();
 
+    }
+
+    private void createCallback() {
+        callback = (consumidor, entrega) -> {
+            String msg = new String(entrega.getBody(), StandardCharsets.UTF_8);
+            System.out.println(msg);
+        };
+    }
+
+    public DeliverCallback getCallback(){
+        return callback;
     }
 
     public void queueDeclare(String FILA) throws IOException {

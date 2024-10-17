@@ -55,7 +55,7 @@ public class Cluster {
         }
 
         executor = Executors.newScheduledThreadPool(3);
-        executor.scheduleAtFixedRate(this::getData, 0, 2, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::getData, 0, 10, TimeUnit.SECONDS);
 
         fixServer();
 
