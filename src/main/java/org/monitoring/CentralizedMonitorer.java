@@ -1,8 +1,16 @@
 package org.monitoring;
 
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class CentralizedMonitorer {
     // var dashboard
-
+    private List<Order> dashbord;
+    public CentralizedMonitorer(){
+        dashbord = new ArrayList<>();
+    }
     public void monitor() {
         // string json = broker.recieve().parse();
 
@@ -14,8 +22,21 @@ public class CentralizedMonitorer {
 
     }
 
-    public void gerarRelatorio() {
+    public void gerarOrdemServico() {
+        if(!dashbord.isEmpty()){
+            //ObjectMapper
+            //try{
 
+            //}
+        }
+    }
+
+    public void connectLoop(){
+
+    }
+
+    public void addDashbord(Order order){
+        dashbord.add(order);
     }
 
 }
