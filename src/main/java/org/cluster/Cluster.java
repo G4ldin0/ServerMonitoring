@@ -140,29 +140,26 @@ public class Cluster {
         }
     }
 
-    public static void main(String[] args) {
-        Cluster cluster = new Cluster(2);
-        cluster.getData();
-    }
-
-    public static class TesteReceberDados{
+    public static class Main1 {
         public static void main(String[] args) {
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost("localhost");
-            try (Connection connection = factory.newConnection();
-                    Channel channel = connection.createChannel()) {
-//                channel.queueDeclare("servidor1/serviço1", false, false, false, null);
-
-                channel.basicConsume("servidor1/serviço1", true, (consumerTag, message) -> {
-                    String m = new String(message.getBody(), StandardCharsets.UTF_8);
-                    JSONObject teste = new JSONObject(m);
-                    System.out.println("Recebido: " + teste);
-                }, consumerTag -> { });
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
+            Cluster cluster = new Cluster(1);
+            cluster.getData();
         }
     }
+
+    public static class Main2 {
+        public static void main(String[] args) {
+            Cluster cluster = new Cluster(2);
+            cluster.getData();
+        }
+    }
+
+    public static class Main3 {
+        public static void main(String[] args) {
+            Cluster cluster = new Cluster(3);
+            cluster.getData();
+        }
+    }
+
 
 }
